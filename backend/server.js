@@ -40,6 +40,30 @@ app.get("/", (req, res) => {
     message: "Backend is running 🚀",
   });
 });
+const cors = require("cors");
+
+const allowedOrigins = [
+  process.env.CLIENT_ORIGIN,
+  process.env.CLIENT_URL,
+  "https://pulse-sepia-omega.vercel.app", // keep your exact vercel domain
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // allow requests with no origin (like Postman)
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error("CORS blocked: " + origin));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// IMPORTANT: allow preflight for ALL routes
+app.options("*", cors());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
