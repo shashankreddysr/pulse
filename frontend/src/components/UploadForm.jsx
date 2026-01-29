@@ -24,14 +24,14 @@ const UploadForm = ({ onUploaded }) => {
     formData.append("title", title || file.name);
 
     try {
-      const res = await api.post("/videos/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const res = await api.post("api/videos/upload", formData, {
         onUploadProgress: (e) => {
           if (e.total) {
             const pct = Math.round((e.loaded * 100) / e.total);
             setProgress(pct);
           }
-        }
+        },
+        withCredentials: true,
       });
 
       if (onUploaded) onUploaded(res.data.video);
