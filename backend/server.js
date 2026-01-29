@@ -40,7 +40,6 @@ app.get("/", (req, res) => {
     message: "Backend is running 🚀",
   });
 });
-const cors = require("cors");
 
 const allowedOrigins = [
   process.env.CLIENT_ORIGIN,
