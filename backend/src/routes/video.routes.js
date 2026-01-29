@@ -40,8 +40,6 @@ const upload = multer({
 // Upload video
 router.post(
   "/upload",
-  auth,
-  requireRole(ROLES.EDITOR, ROLES.ADMIN),
   upload.single("video"),
   async (req, res, next) => {
     try {
