@@ -26,7 +26,14 @@ app.use(morgan("dev"));
 
 // Static serving for uploaded videos (local storage)
 app.use("/uploads", express.static(path.join(__dirname, process.env.UPLOAD_DIR || "uploads")));
-
+// Health check route
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "PulseVision Backend",
+    message: "Backend is running 🚀",
+  });
+});
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
