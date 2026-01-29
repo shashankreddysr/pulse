@@ -1,44 +1,56 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { api, setAuthToken } from "../api/client";
+// frontend/src/context/AuthContext.jsx
+
+import React, { createContext, useContext, useState } from "react";
+import { apiFetch } from "../api/api";
 
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  });
-  const [token, setTokenState] = useState(() => localStorage.getItem("token"));
-
-  useEffect(() => {
-    setAuthToken(token);
-  }, [token]);
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
 
   const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
-    setUser(res.data.user);
-    setTokenState(res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data.user));
-    localStorage.setItem("token", res.data.token);
+    const data = await apiFetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+
+    // If your backend returns user info, store it
+    // Example: { status: "ok", token, user: {...} }
+    if (data?.user) setUser(data.user);
+
+    return data;
   };
 
   const register = async (payload) => {
-    await api.post("/auth/register", payload);
+    // payload: { name, email, password, tenantId }
+    const data = await apiFetch("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    if (data?.user) setUser(data.user);
+    return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // if backend has /logout
+    try {
+      await apiFetch("/api/auth/logout", { method: "POST" });
+    } catch (e) {
+      // ignore if route doesn't exist
+    }
     setUser(null);
-    setTokenState(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setAuthToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+}
