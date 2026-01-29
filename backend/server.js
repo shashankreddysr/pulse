@@ -4,6 +4,12 @@ const cors = require("cors");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
 const path = require("path");
+const fs = require("fs");
+
+const UPLOAD_DIR = path.join(__dirname, process.env.UPLOAD_DIR || "uploads");
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
 
 dotenv.config();
 
