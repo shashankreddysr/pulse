@@ -1,95 +1,84 @@
-import React, { useState } from "react";
-import { api } from "../api/client";
+// frontend/src/components/UploadForm.jsx
 
-const UploadForm = ({ onUploaded }) => {
-  const [file, setFile] = useState(null);
+import { useState } from "react";
+import { apiUpload } from "../api/api"; // adjust path if your folder differs
+
+export default function UploadForm({ onUploaded }) {
   const [title, setTitle] = useState("");
-  const [progress, setProgress] = useState(0);
+  const [file, setFile] = useState(null);
+
+  const [progress, setProgress] = useState(0); // fetch doesn't give progress reliably
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) {
-      setError("Please choose a video file to upload.");
-      return;
-    }
 
     setError("");
     setSuccess("");
     setProgress(0);
 
-    const formData = new FormData();
-    formData.append("video", file);
-    formData.append("title", title || file.name);
+    if (!file) {
+      setError("Please choose a video file.");
+      return;
+    }
 
     try {
-      const res = await api.post("api/videos/upload", formData, {
-        onUploadProgress: (e) => {
-          if (e.total) {
-            const pct = Math.round((e.loaded * 100) / e.total);
-            setProgress(pct);
-          }
-        },
-      });
+      const formData = new FormData();
+      formData.append("video", file);
+      formData.append("title", title || file.name);
 
-      if (onUploaded) onUploaded(res.data.video);
+      // IMPORTANT: backend route is /api/videos/upload
+      const data = await apiUpload("/api/videos/upload", formData);
+
+      if (onUploaded) onUploaded(data.video);
 
       setSuccess("Video uploaded successfully. Processing has started.");
       setFile(null);
       setTitle("");
-      // keep progress at 100 so the user sees it
+      setProgress(100);
     } catch (err) {
-      setError(err.response?.data?.message || "Upload failed. Please try again.");
+      setError(err?.response?.data?.message || err.message || "Upload failed. Please try again.");
       setProgress(0);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      {error && <p className="text-error">{error}</p>}
-      {success && <p className="text-muted" style={{ color: "#4ade80" }}>{success}</p>}
+    <form onSubmit={handleSubmit} style={{ maxWidth: 600 }}>
+      <h2>Upload new video</h2>
 
-      <div className="form-group">
-        <label className="label">Title</label>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {success && <p style={{ color: "green" }}>{success}</p>}
+
+      <div style={{ marginTop: 10 }}>
+        <label>Title</label>
         <input
-          className="input"
-          placeholder="Marketing demo, training module, incident review..."
+          style={{ width: "100%", padding: 8, marginTop: 6 }}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          placeholder="demo"
         />
       </div>
 
-      <div className="form-group">
-        <label className="label">Video file</label>
+      <div style={{ marginTop: 10 }}>
+        <label>Video file</label>
         <input
-          className="input"
+          style={{ width: "100%", padding: 8, marginTop: 6 }}
           type="file"
           accept="video/*"
-          onChange={(e) => setFile(e.target.files[0] || null)}
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
         />
-        <p className="text-muted">
-          Supported: any <code>video/*</code> format · max 200&nbsp;MB (MP4 recommended).
-        </p>
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <button type="submit">Upload</button>
       </div>
 
       {progress > 0 && (
-        <div style={{ marginBottom: "0.75rem" }}>
-          <div className="progress-track">
-            <div
-              className="progress-fill"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="text-muted">{progress}% uploaded</p>
+        <div style={{ marginTop: 10 }}>
+          <div>Progress: {progress}%</div>
         </div>
       )}
-
-      <button className="btn btn-primary" type="submit">
-        Upload
-      </button>
     </form>
   );
-};
-
-export default UploadForm;
+}

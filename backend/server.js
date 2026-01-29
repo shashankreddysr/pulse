@@ -26,7 +26,6 @@ const server = http.createServer(app);
 connectDB();
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -62,7 +61,16 @@ app.use(
 );
 
 // IMPORTANT: allow preflight for ALL routes
-app.options("*", cors());
+app.options("*", cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error("CORS blocked: " + origin));
+  },
+  credentials: true,
+  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
+}));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
