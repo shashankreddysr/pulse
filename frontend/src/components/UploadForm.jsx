@@ -31,7 +31,6 @@ const UploadForm = ({ onUploaded }) => {
             setProgress(pct);
           }
         },
-        withCredentials: true,
       });
 
       if (onUploaded) onUploaded(res.data.video);
